@@ -4,16 +4,51 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/mattn/go-sqlite3"
-	"strconv"
+    "encoding/json"
+    "io/ioutil"
+    "net/http"
 )
 
-var all_blogs[] entry
 
-// represents a blog entry
-type entry struct {
-	entry_id int
-	entry_title string
-	entry_body string
+var all_blogs[] string
+
+func main() {
+	http.HandleFunc("/", func (w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "Blog")
+	})
+	// post request
+	http.HandleFunc("/post", post_request)
+
+	// opens the server at port 80
+	http.ListenAndServe(":80", nil)
+}
+
+func get_request(w http.ResponseWriter, r *http.Request) {
+	// gets the json data
+	json_body, err := json.Marshal(all_blogs)
+	if err != nil {
+		http.Error(w, "Error", http.StatusInternalServerError)
+	}
+	w.Write(json_body)
+	/*
+	*  add_entry() must be called to create the database
+	*  Not sure how to put this JSON data into the database
+	*/
+}
+
+func post_request(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "POST" {
+		// reads out the request into a slice of bytes
+		post, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, "Error", http.StatusInternalServerError)
+		}
+		// appends the post to the existing array of posts (as strings) and prints them all
+		all_blogs = append(all_blogs, string(post))
+		for i := 0; i < len(all_blogs); i++ {
+			fmt.Fprintf(w, all_blogs[i])
+		}
+	}
 }
 
 func add_entry(id int, title string, body string) {
@@ -27,26 +62,6 @@ func add_entry(id int, title string, body string) {
 	statement, _ = database.Prepare("INSERT INTO blog_entry (id, title, body) VALUES (?, ?, ?)")
 	statement.Exec(id, title, body)
 
-	//inserts the blog entry into a slice of entries
-	my_entry := entry{id, title, body}
-	all_blogs = append(all_blogs, my_entry)
 }
 
-func list_entries() {
-	var id int
-	var title string
-	var body string
-
-	// iterates through the slice of entries and prints out the id, title, and body of each one
-	for i := 0; i < len(all_blogs); i++ {
-		id = all_blogs[i].entry_id
-		title = all_blogs[i].entry_title
-		body = all_blogs[i].entry_body
-
-		fmt.Println("Blog Post #" + strconv.Itoa(id))
-		fmt.Println("Title: " + title)
-		fmt.Println("Body: " + body)
-		fmt.Println(" ")
-	}
-}
 
