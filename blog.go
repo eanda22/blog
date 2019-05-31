@@ -52,6 +52,8 @@ func post_request(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Fatal(err)
 		}
+		// adds the new blog entry to the 
+		add_entry(post.Title, post.Body)
 		log.Println(post)
 		fmt.Fprintf(w, "Post Saved")
 	}
