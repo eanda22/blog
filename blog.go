@@ -4,10 +4,9 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/mattn/go-sqlite3"
-        "encoding/json"
+    	"encoding/json"
 	"net/http"
 	"log"
-	"io/ioutil"
 )
 
 type blog struct {
@@ -15,7 +14,7 @@ type blog struct {
 	Body  string `json:"body"`
 }
 
-var all_blogs[] string
+var all_blogs[] blog
 
 func main() {
 	http.HandleFunc("/", func (w http.ResponseWriter, r *http.Request) {
@@ -28,20 +27,9 @@ func main() {
 	http.ListenAndServe(":8080", nil)
 }
 
-func get_request(w http.ResponseWriter, r *http.Request) {
-	// reads out the request into a slice of bytes
-	post, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, "Error", http.StatusInternalServerError)
-	}
-	// appends the post to the existing array of posts (as strings) and prints them all
-	all_blogs = append(all_blogs, string(post))
-	for i := 0; i < len(all_blogs); i++ {
-		fmt.Fprintf(w, all_blogs[i])
-	}
-	/*
-	 * Not sure how to take the slice of strings and put it into the database
-	 */
+func get_request(w http.ResponseWriter, r *http.Request) []blog {
+	// returns the json array of blogs
+	return all_blogs
 }
 
 func post_request(w http.ResponseWriter, r *http.Request) {
@@ -52,8 +40,10 @@ func post_request(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		// adds the new blog entry to the 
+		// adds the new blog entry to the database
 		add_entry(post.Title, post.Body)
+		// adds the new blog entry to the array of json objects
+		all_blogs = append(all_blogs, post)
 		log.Println(post)
 		fmt.Fprintf(w, "Post Saved")
 	}
@@ -71,5 +61,8 @@ func add_entry(title string, body string) {
 	statement.Exec(title, body)
 
 }
+
+
+
 
 
