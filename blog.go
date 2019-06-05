@@ -23,13 +23,24 @@ func main() {
 	// post request
 	http.HandleFunc("/post", post_request)
 
+	// get request
+	http.HandleFunc("/get", get_request)
+
 	// opens the server at port 8080
 	http.ListenAndServe(":8080", nil)
 }
 
-func get_request(w http.ResponseWriter, r *http.Request) []blog {
-	// returns the json array of blogs
-	return all_blogs
+func get_request(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "GET" {
+		for i := 0; i < len(all_blogs); i++ {
+			json_value, err := json.Marshal(all_blogs[i])
+			if err != nil {
+				fmt.Println(err)
+			}
+			// prints out every post as a json
+			fmt.Fprintln(w, string(json_value))
+		}
+	}	
 }
 
 func post_request(w http.ResponseWriter, r *http.Request) {
@@ -42,6 +53,7 @@ func post_request(w http.ResponseWriter, r *http.Request) {
 		}
 		// adds the new blog entry to the database
 		add_entry(post.Title, post.Body)
+
 		// adds the new blog entry to the array of json objects
 		all_blogs = append(all_blogs, post)
 		log.Println(post)
@@ -61,8 +73,5 @@ func add_entry(title string, body string) {
 	statement.Exec(title, body)
 
 }
-
-
-
 
 
